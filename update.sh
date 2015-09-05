@@ -16,13 +16,23 @@ curl -sSL "${packagesUrl}.bz2" | bunzip2 > "$packages"
 
 for version in "${versions[@]}"; do
 	IFS=- read pg_major postgis_major <<< "$version"
-	fullVersion="$(grep -m1 -A10 "^Package: postgresql-$pg_major-postgis-$postgis_major\$" "$packages" | grep -m1 '^Version: ' | cut -d' ' -f2)"
-	[ -z "$fullVersion" ] && { echo >&2 "Unable to find package for PostGIS $postgis_major on Postgres $pg_major"; exit 1; }
+	postgisVersion="$(grep -m1 -A10 "^Package: postgresql-$pg_major-postgis-$postgis_major\$" "$packages" | grep -m1 '^Version: ' | cut -d' ' -f2)"
+	pgRoutingPkgVersion="$(grep -m1 -A10 "^Package: postgresql-$pg_major-pgrouting\$" "$packages" | grep -m1 '^Version: ' | cut -d' ' -f2)"
+	[ -z "$postgisVersion" ] && { echo >&2 "Unable to find package for PostGIS $postgis_major on Postgres $pg_major"; exit 1; }
+	[ -z "$pgRoutingPkgVersion" ] && { echo >&2 "Unable to find package for pgRouting $postgis_major on Postgres $pg_major"; exit 1; }
+	pgRoutingVersion="${pgRoutingPkgVersion%-*}"
+	pgRoutingMajor="${pgRoutingVersion%.*}"
 	(
 		set -x
 		cp Dockerfile.template initdb-postgis.sh README.md "$version/"
 		mv "$version/Dockerfile.template" "$version/Dockerfile"
-		sed -i 's/%%PG_MAJOR%%/'$pg_major'/g; s/%%POSTGIS_MAJOR%%/'$postgis_major'/g; s/%%POSTGIS_VERSION%%/'$fullVersion'/g' "$version/Dockerfile"
+		sed -i '
+			s/%%PG_MAJOR%%/'$pg_major'/g;
+			s/%%POSTGIS_MAJOR%%/'$postgis_major'/g;
+			s/%%POSTGIS_VERSION%%/'$postgisVersion'/g;
+			s/%%PG_ROUTING_VERSION%%/'$pgRoutingPkgVersion'/g
+			s/%%PG_ROUTING_MAJOR%%/'$pgRoutingMajor'/g
+		' "$version/Dockerfile"
 	)
 done
 

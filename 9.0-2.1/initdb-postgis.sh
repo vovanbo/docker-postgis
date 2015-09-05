@@ -21,6 +21,12 @@ for DB in template_postgis "$POSTGRES_DB"; do
 			CREATE EXTENSION postgis_topology;
 			CREATE EXTENSION fuzzystrmatch;
 			CREATE EXTENSION postgis_tiger_geocoder;
+			CREATE EXTENSION pgrouting;
+		EOSQL
+
+		echo "Loading pgRouting into $DB via CREATE EXTENSION"
+		psql --dbname="$DB" <<-'EOSQL'
+			CREATE EXTENSION pgrouting;
 		EOSQL
 	else
 		echo "Loading PostGIS into $DB via files"
@@ -35,5 +41,8 @@ for DB in template_postgis "$POSTGRES_DB"; do
 		for file in $files; do
 			psql --dbname="$DB" < "${file}.sql"
 		done
+
+		echo "Loading pgRouting into $DB via files"
+		psql --dbname="$DB" < "/usr/share/postgres/$PG_MAJOR/contrib/pgrouting-$PG_ROUTING_MAJOR/pgrouting.sql"
 	fi
 done
