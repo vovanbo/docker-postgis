@@ -1,5 +1,5 @@
 FROM postgres:9.5
-MAINTAINER Mike Dillon <mike@appropriate.io>
+MAINTAINER Vladimir Bolshakov <vovanbo@gmail.com>
 
 ENV POSTGIS_MAJOR 2.2
 ENV POSTGIS_VERSION 2.2.2+dfsg-4.pgdg80+1
